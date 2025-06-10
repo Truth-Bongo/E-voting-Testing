@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nkoranza SHTs - E-Voting System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            DEFAULT: '#1E40AF',
+                            light: '#3B82F6',
+                        },
+                        secondary: '#10B981',
+                        accent: '#F59E0B',
+                        dark: '#1F2937',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            },
+            plugins: [],
+        }
+    </script>
+    <style>
+        /* Custom CSS for elements not covered by Tailwind */
+        .auth-container {
+            background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%);
+        }
+        .vote-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+        #loader {
+            border-top-color: #3B82F6;
+            -webkit-animation: spinner 1.5s linear infinite;
+            animation: spinner 1.5s linear infinite;
+        }
+        @-webkit-keyframes spinner {
+            0% { -webkit-transform: rotate(0deg); }
+            100% { -webkit-transform: rotate(360deg); }
+        }
+        @keyframes spinner {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="font-sans bg-gray-50 min-h-screen">
+    <!-- App Container -->
+    <div id="app" class="min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="bg-primary text-white shadow-md">
+            <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-vote-yea text-2xl"></i>
+                    <h1 class="text-xl font-bold">Nkoranza SHTs E-Voting</h1>
+                </div>
+                <nav>
+                    <ul class="flex space-x-6">
+                        <li><a href="#home" class="hover:text-accent transition" onclick="showSection('home')">Home</a></li>
+                        <li><a href="#vote" class="hover:text-accent transition" onclick="showSection('vote')">Vote</a></li>
+                        <li><a href="#results" class="hover:text-accent transition" onclick="showSection('results')">Results</a></li>
+                        <li id="admin-nav" class="hidden"><a href="#admin" class="hover:text-accent transition" onclick="showSection('admin')">Admin</a></li>
+                        <li id="login-nav"><a href="#login" class="hover:text-accent transition" onclick="showSection('login')">Login</a></li>
+                        <li id="logout-nav" class="hidden"><a href="#" class="hover:text-accent transition" onclick="logout()">Logout</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-grow container mx-auto px-4 py-8">
+            <!-- Loader -->
+            <div id="loader-section" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+                <div id="loader" class="w-16 h-16 border-4 border-white border-solid rounded-full animate-spin"></div>
+            </div>
+
+            <!-- Home Section -->
+            <section id="home-section" class="max-w-4xl mx-auto">
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-bold text-dark mb-4">Welcome to Nkoranza SHTs E-Voting System</h2>
+                    <p class="text-gray-600 mb-6">Cast your vote securely and conveniently for your school elections</p>
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="showSection('vote')" class="bg-primary hover:bg-primary-light text-white px-6 py-2 rounded-lg transition">Vote Now</button>
+                        <button onclick="showSection('results')" class="bg-secondary hover:bg-green-500 text-white px-6 py-2 rounded-lg transition">View Results</button>
+                    </div>
+                </div>
+
+                <div class="grid md:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <div class="text-accent mb-4 text-2xl">
+                            <i class="fas fa-user-shield"></i>
+                        </div>
+                        <h3 class="font-bold text-lg mb-2">Secure Voting</h3>
+                        <p class="text-gray-600">Our system uses advanced encryption to ensure your vote remains anonymous and secure.</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <div class="text-accent mb-4 text-2xl">
+                            <i class="fas fa-bolt"></i>
+                        </div>
+                        <h3 class="font-bold text-lg mb-2">Fast Results</h3>
+                        <p class="text-gray-600">Get real-time election results as soon as voting ends, eliminating long waits.</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <div class="text-accent mb-4 text-2xl">
+                            <i class="fas fa-mobile-alt"></i>
+                        </div>
+                        <h3 class="font-bold text-lg mb-2">Mobile Friendly</h3>
+                        <p class="text-gray-600">Vote from any device, whether you're using a computer, tablet, or smartphone.</p>
+                    </div>
+                </div>
+
+                <div class="mt-12 bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="font-bold text-xl mb-4 text-center">Upcoming Elections</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full bg-white">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="py-2 px-4 border-b">Position</th>
+                                    <th class="py-2 px-4 border-b">Start Date</th>
+                                    <th class="py-2 px-4 border-b">End Date</th>
+                                    <th class="py-2 px-4 border-b">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="py-2 px-4 border-b text-center">SRC President</td>
+                                    <td class="py-2 px-4 border-b text-center">2025-06-01</td>
+                                    <td class="py-2 px-4 border-b text-center">2025-06-05</td>
+                                    <td class="py-2 px-4 border-b text-center"><span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Active</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2 px-4 border-b text-center">Academic Committee</td>
+                                    <td class="py-2 px-4 border-b text-center">2025-06-10</td>
+                                    <td class="py-2 px-4 border-b text-center">2025-06-12</td>
+                                    <td class="py-2 px-4 border-b text-center"><span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs">Upcoming</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2 px-4 border-b text-center">Sports Committee</td>
+                                    <td class="py-2 px-4 border-b text-center">2025-05-20</td>
+                                    <td class="py-2 px-4 border-b text-center">2025-05-22</td>
+                                    <td class="py-2 px-4 border-b text-center"><span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs">Ended</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Login Section -->
+            <section id="login-section" class="hidden max-w-md mx-auto">
+                <div class="auth-container p-8 rounded-lg shadow-xl text-white">
+                    <div class="text-center mb-8">
+                        <i class="fas fa-user-lock text-4xl mb-4"></i>
+                        <h2 class="text-2xl font-bold">Voter Login</h2>
+                        <p class="opacity-80">Enter your credentials to access the voting system</p>
+                    </div>
+                    
+                    <form id="loginForm" class="space-y-6">
+                        <div>
+                            <label for="studentId" class="block mb-1">Student ID</label>
+                            <input type="text" id="studentId" class="w-full px-4 py-2 rounded bg-primary-light bg-opacity-20 border border-white border-opacity-30 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent" placeholder="NKSHT20230XX" required>
+                        </div>
+                        
+                        <div>
+                            <label for="password" class="block mb-1">Password</label>
+                            <input type="password" id="password" class="w-full px-4 py-2 rounded bg-primary-light bg-opacity-20 border border-white border-opacity-30 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent" placeholder="••••••••" required>
+                        </div>
+                        
+                        <div>
+                            <button type="button" onclick="authenticateUser()" class="w-full bg-accent hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded transition duration-300">
+                                Login
+                            </button>
+                        </div>
+                        
+                        <p class="text-center text-sm opacity-80">
+                            Forgot your password? Contact the electoral committee
+                        </p>
+                        
+                        <div id="login-error" class="hidden bg-red-100 border-l-4 border-red-500 text-red-700 p-3">
+                            <p>Invalid credentials. Please try again.</p>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Voting Section -->
+            <section id="vote-section" class="hidden">
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-bold text-dark mb-2">Cast Your Vote</h2>
+                    <p class="text-gray-600">Current Election: SRC President 2024/2025</p>
+                    <div class="mt-4">
+                        <span id="time-left" class="bg-primary text-white px-3 py-1 rounded-full text-sm">Time left: 2 days 4 hours</span>
+                    </div>
+                </div>
+
+                <div class="max-w-4xl mx-auto">
+                    <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+                        <h3 class="text-xl font-bold mb-4">Instructions</h3>
+                        <ol class="list-decimal list-inside space-y-2 text-gray-700">
+                            <li>Select your preferred candidate for each position</li>
+                            <li>Review your selections before submission</li>
+                            <li>Click "Submit Votes" to cast your ballot</li>
+                            <li>Note: You cannot change your vote after submission</li>
+                        </ol>
+                    </div>
+
+                    <div class="grid md:grid-cols-2 gap-6 mb-8">
+                        <!-- Position 1 -->
+                        <div class="bg-white rounded-lg shadow-md p-6">
+                            <h3 class="text-xl font-bold mb-4 border-b pb-2">SRC President</h3>
+                            <div class="space-y-4">
+                                <div class="vote-card bg-gray-50 p-4 rounded-lg border border-gray-200 hover:border-primary transition duration-300 cursor-pointer" onclick="selectCandidate('president', 'candidate1')">
+                                    <div class="flex items-center space-x-4">
+                                        <div class="h-12 w-12 rounded-full bg-primary-light flex items-center justify-center text-white font-bold">AK</div>
+                                        <div>
+                                            <h4 class="font-semibold">Andrew Kwarteng</h4>
+                                            <p class="text-sm text-gray-600">Computer Science</p>
+                                        </div>
+                                        <div class="ml-auto">
+                                            <div class="h-5 w-5 border-2 border-gray-400 rounded-full flex items-center justify-center">
+                                                <div id="president-candidate1-check" class="h-3 w-3 bg-primary rounded-full hidden"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <input type="radio" id="president-candidate1" name="president" class="hidden" value="Andrew Kwarteng">
+                                </div>
+
+                                <div class="vote-card bg-gray-50 p-4 rounded-lg border border-gray-200 hover:border-primary transition duration-300 cursor-pointer" onclick="selectCandidate('president', 'candidate2')">
+                                    <div class="flex items-center space-x-4">
+                                        <div class="h-12 w-12 rounded-full bg-secondary flex items-center justify-center text-white font-bold">EA</div>
+                                        <div>
+                                            <h4 class="font-semibold">Esi Amankwah</h4>
+                                            <p class="text-sm text-gray-600">Business Administration</p>
+                                        </div>
+                                        <div class="ml-auto">
+                                            <div class="h-5 w-5 border-2 border-gray-400 rounded-full flex items-center justify-center">
+                                                <div id="president-candidate2-check" class="h-3 w-3 bg-primary rounded-full hidden"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <input type="radio" id="president-candidate2" name="president" class="hidden" value="Esi Amankwah">
+                                </div>
+
+                                <div class="vote-card bg-gray-50 p-4 rounded-lg border border-gray-200 hover:border-primary transition duration-300 cursor-pointer" onclick="selectCandidate('president', 'candidate3')">
+                                    <div class="flex items-center space-x-4">
+                                        <div class="h-12 w-12 rounded-full bg-accent flex items-center justify-center text-white font-bold">KB</div>
+                                        <div>
+                                            <h4 class="font-semibold">Kwame Boateng</h4>
+                                            <p class="text-sm text-gray-600">Electrical Engineering</p>
+                                        </div>
+                                        <div class="ml-auto">
+                                            <div class="h-5 w-5 border-2 border-gray-400 rounded-full flex items-center justify-center">
+                                                <div id="president-candidate3-check" class="h-3 w-3 bg-primary rounded-full hidden"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <input type="radio" id="president-candidate3" name="president" class="hidden" value="Kwame Boateng">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Position 2 -->
+                        <div class="bg-white rounded-lg shadow-md p-6">
+                            <h3 class="text-xl font-bold mb-4 border-b pb-2">General Secretary</h3>
+                            <div class="space-y-4">
+                                <div class="vote-card bg-gray-50 p-4 rounded-lg border border-gray-200 hover:border-primary transition duration-300 cursor-pointer" onclick="selectCandidate('secretary', 'candidate1')">
+                                    <div class="flex items-center space-x-4">
+                                        <div class="h-12 w-12 rounded-full bg-primary-light flex items-center justify-center text-white font-bold">SA</div>
+                                        <div>
+                                            <h4 class="font-semibold">Sandra Addo</h4>
+                                            <p class="text-sm text-gray-600">Accounting</p>
+                                        </div>
+                                        <div class="ml-auto">
+                                            <div class="h-5 w-5 border-2 border-gray-400 rounded-full flex items-center justify-center">
+                                                <div id="secretary-candidate1-check" class="h-3 w-3 bg-primary rounded-full hidden"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <input type="radio" id="secretary-candidate1" name="secretary" class="hidden" value="Sandra Addo">
+                                </div>
+
+                                <div class="vote-card bg-gray-50 p-4 rounded-lg border border-gray-200 hover:border-primary transition duration-300 cursor-pointer" onclick="selectCandidate('secretary', 'candidate2')">
+                                    <div class="flex items-center space-x-4">
+                                        <div class="h-12 w-12 rounded-full bg-secondary flex items-center justify-center text-white font-bold">DJ</div>
+                                        <div>
+                                            <h4 class="font-semibold">David Johnson</h4>
+                                            <p class="text-sm text-gray-600">Mechanical Engineering</p>
+                                        </div>
+                                        <div class="ml-auto">
+                                            <div class="h-5 w-5 border-2 border-gray-400 rounded-full flex items-center justify-center">
+                                                <div id="secretary-candidate2-check" class="h-3 w-3 bg-primary rounded-full hidden"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <input type="radio" id="secretary-candidate2" name="secretary" class="hidden" value="David Johnson">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="confirmation-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+                        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+                            <h3 class="text-xl font-bold mb-4">Confirm Your Votes</h3>
+                            <div class="mb-6">
+                                <p class="font-semibold">SRC President:</p>
+                                <p id="confirm-president" class="text-gray-600">Not selected</p>
+                                
+                                <p class="font-semibold mt-3">General Secretary:</p>
+                                <p id="confirm-secretary" class="text-gray-600">Not selected</p>
+                            </div>
+                            <div class="flex justify-end space-x-4">
+                                <button onclick="document.getElementById('confirmation-modal').classList.add('hidden')" class="px-4 py-2 border border-gray-300 rounded hover:bg-gray-100 transition">Cancel</button>
+                                <button onclick="submitVotes()" class="bg-primary hover:bg-primary-light text-white px-4 py-2 rounded transition">Confirm & Submit</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center">
+                        <button id="submit-votes-btn" onclick="confirmVotes()" disabled class="bg-primary hover:bg-primary-light text-white font-bold py-3 px-8 rounded-lg transition disabled:bg-gray-400 disabled:cursor-not-allowed">
+                            Submit Votes
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Results Section -->
+            <section id="results-section" class="hidden max-w-4xl mx-auto">
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-bold text-dark">Election Results</h2>
+                    <p class="text-gray-600">SRC Elections 2024/2025 - Final Results</p>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-bold">SRC President</h3>
+                        <div class="text-sm text-gray-500">
+                            <span>Total Votes: 1,245</span>
+                            <span class="ml-4">Voter Turnout: 82%</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <!-- Candidate 1 -->
+                        <div class="border-l-4 border-primary pl-4">
+                            <div class="flex justify-between items-center mb-1">
+                                <div class="font-semibold">Andrew Kwarteng - Computer Science</div>
+                                <div class="font-bold">56%</div>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-4">
+                                <div class="bg-primary h-4 rounded-full" style="width: 56%"></div>
+                            </div>
+                            <div class="text-sm text-gray-500 mt-1">698 votes</div>
+                        </div>
+
+                        <!-- Candidate 2 -->
+                        <div class="border-l-4 border-secondary pl-4">
+                            <div class="flex justify-between items-center mb-1">
+                                <div class="font-semibold">Esi Amankwah - Business Administration</div>
+                                <div class="font-bold">32%</div>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-4">
+                                <div class="bg-secondary h-4 rounded-full" style="width: 32%"></div>
+                            </div>
+                            <div class="text-sm text-gray-500 mt-1">398 votes</div>
+                        </div>
+
+                        <!-- Candidate 3 -->
+                        <div class="border-l-4 border-accent pl-4">
+                            <div class="flex justify-between items-center mb-1">
+                                <div class="font-semibold">Kwame Boateng - Electrical Engineering</div>
+                                <div class="font-bold">12%</div>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-4">
+                                <div class="bg-accent h-4 rounded-full" style="width: 12%"></div>
+                            </div>
+                            <div class="text-sm text-gray-500 mt-1">149 votes</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-bold">General Secretary</h3>
+                        <div class="text-sm text-gray-500">
+                            <span>Total Votes: 1,245</span>
+                            <span class="ml-4">Voter Turnout: 82%</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <!-- Candidate 1 -->
+                        <div class="border-l-4 border-primary-light pl-4">
+                            <div class="flex justify-between items-center mb-1">
+                                <div class="font-semibold">Sandra Addo - Accounting</div>
+                                <div class="font-bold">64%</div>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-4">
+                                <div class="bg-primary-light h-4 rounded-full" style="width: 64%"></div>
+                            </div>
+                            <div class="text-sm text-gray-500 mt-1">797 votes</div>
+                        </div>
+
+                        <!-- Candidate 2 -->
+                        <div class="border-l-4 border-green-400 pl-4">
+                            <div class="flex justify-between items-center mb-1">
+                                <div class="font-semibold">David Johnson - Mechanical Engineering</div>
+                                <div class="font-bold">36%</div>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-4">
+                                <div class="bg-green-400 h-4 rounded-full" style="width: 36%"></div>
+                            </div>
+                            <div class="text-sm text-gray-500 mt-1">448 votes</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8 bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-xl font-bold mb-4">Summary</h3>
+                    <div class="grid md:grid-cols-3 gap-4">
+                        <div class="text-center p-4 border rounded-lg">
+                            <div class="text-3xl font-bold text-primary">1,245</div>
+                            <div class="text-gray-600">Total Votes</div>
+                        </div>
+                        <div class="text-center p-4 border rounded-lg">
+                            <div class="text-3xl font-bold text-secondary">82%</div>
+                            <div class="text-gray-600">Voter Turnout</div>
+                        </div>
+                        <div class="text-center p-4 border rounded-lg">
+                            <div class="text-3xl font-bold text-accent">5</div>
+                            <div class="text-gray-600">Contested Positions</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Admin Dashboard Section -->
+            <section id="admin-section" class="hidden max-w-6xl mx-auto">
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-bold text-dark">Admin Dashboard</h2>
+                    <p class="text-gray-600">Manage elections, candidates, and voter information</p>
+                </div>
+
+                <div class="grid md:grid-cols-3 gap-6 mb-8">
+                    <div class="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition" onclick="showAdminSection('elections')">
+                        <div class="flex items-center space-x-4">
+                            <div class="bg-primary-light bg-opacity-10 p-3 rounded-full">
+                                <i class="fas fa-calendar-alt text-primary text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-lg">Elections</h3>
+                                <p class="text-gray-600 text-sm">Manage active and upcoming elections</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition" onclick="showAdminSection('candidates')">
+                        <div class="flex items-center space-x-4">
+                            <div class="bg-secondary bg-opacity-10 p-3 rounded-full">
+                                <i class="fas fa-users text-secondary text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-lg">Candidates</h3>
+                                <p class="text-gray-600 text-sm">Add and manage candidates</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition" onclick="showAdminSection('voters')">
+                        <div class="flex items-center space-x-4">
+                            <div class="bg-accent bg-opacity-10 p-3 rounded-full">
+                                <i class="fas fa-user-graduate text-accent text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-lg">Voters</h3>
+                                <p class="text-gray-600 text-sm">Manage voter registration</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admin Elections Subsection -->
+                <div id="admin-elections" class="bg-white rounded-lg shadow-md p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-bold">Elections Management</h3>
+                        <button onclick="showAddElectionModal()" class="bg-primary hover:bg-primary-light text-white px-4 py-2 rounded text-sm">
+                            <i class="fas fa-plus mr-1"></i> Add Election
+                        </button>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">End Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">SRC President 2024/2025</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">2025-06-01</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">2025-06-05</td>
+                                    <td class="px-6 py-4 whitespace-nowrap"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Active</span></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <button class="text-primary hover:text-primary-light mr-3"><i class="fas fa-edit"></i></button>
+                                        <button class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">Academic Committee</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">2025-06-10</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">2025-06-12</td>
+                                    <td class="px-6 py-4 whitespace-nowrap"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Upcoming</span></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <button class="text-primary hover:text-primary-light mr-3"><i class="fas fa-edit"></i></button>
+                                        <button class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">Sports Committee</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">2025-05-20</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">2025-05-22</td>
+                                    <td class="px-6 py-4 whitespace-nowrap"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Ended</span></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <button class="text-primary hover:text-primary-light mr-3"><i class="fas fa-edit"></i></button>
+                                        <button class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Admin Candidates Subsection (Hidden by default) -->
+                <div id="admin-candidates" class="hidden bg-white rounded-lg shadow-md p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-bold">Candidates Management</h3>
+                        <button onclick="showAddCandidateModal()" class="bg-primary hover:bg-primary-light text-white px-4 py-2 rounded text-sm">
+                            <i class="fas fa-plus mr-1"></i> Add Candidate
+                        </button>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Position</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Election</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">Andrew Kwarteng</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">SRC President</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">Computer Science</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">SRC President 2024/2025</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <button class="text-primary hover:text-primary-light mr-3"><i class="fas fa-edit"></i></button>
+                                        <button class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">Esi Amankwah</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">SRC President</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">Business Administration</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">SRC President 2024/2025</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <button class="text-primary hover:text-primary-light mr-3"><i class="fas fa-edit"></i></button>
+                                        <button class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">Sandra Addo</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">General Secretary</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">Accounting</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">SRC President 2024/2025</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <button class="text-primary hover:text-primary-light mr-3"><i class="fas fa-edit"></i></button>
+                                        <button class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Admin Voters Subsection (Hidden by default) -->
+                <div id="admin-voters" class="hidden bg-white rounded-lg shadow-md p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-bold">Voters Management</h3>
+                        <div class="flex space-x-3">
+                            <button onclick="showImportVotersModal()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm">
+                                <i class="fas fa-file-import mr-1"></i> Import
+                            </button>
+                            <button onclick="showAddVoterModal()" class="bg-primary hover:bg-primary-light text-white px-4 py-2 rounded text-sm">
+                                <i class="fas fa-plus mr-1"></i> Add Voter
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mb-4 flex justify-between items-center">
+                        <div class="relative max-w-xs">
+                            <label for="voter-search" class="sr-only">Search</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-search text-gray-400"></i>
+                                </div>
+                                <input type="text" id="voter-search" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm" placeholder="Search">
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm text-gray-600">Filter by:</span>
+                            <select class="block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md">
+                                <option>All</option>
+                                <option>Students</option>
+                                <option>Staff</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student ID</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Full Name</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Program</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Level</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Voted</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">NKSHT2025001</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">John Mensah</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">Computer Science</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">200</td>
+                                    <td class="px-6 py-4 whitespace-nowrap"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Yes</span></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <button class="text-primary hover:text-primary-light mr-3"><i class="fas fa-edit"></i></button>
+                                        <button class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">NKSHT2025002</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">Ama Asante</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">Business Admin</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">100</td>
+                                    <td class="px-6 py-4 whitespace-nowrap"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Yes</span></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <button class="text-primary hover:text-primary-light mr-3"><i class="fas fa-edit"></i></button>
+                                        <button class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">NKSHT2025003</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">Kwaku Boateng</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">Electrical Eng.</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">300</td>
+                                    <td class="px-6 py-4 whitespace-nowrap"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">No</span></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <button class="text-primary hover:text-primary-light mr-3"><i class="fas fa-edit"></i></button>
+                                        <button class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="mt-4 flex justify-between items-center">
+                        <div class="text-sm text-gray-500">
+                            Showing <span class="font-medium">1</span> to <span class="font-medium">3</span> of <span class="font-medium">1,245</span> voters
+                        </div>
+                        <nav class="flex space-x-2">
+                            <button class="px-3 py-1 border border-gray-300 rounded text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                                Previous
+                            </button>
+                            <button class="px-3 py-1 border border-gray-300 rounded text-sm font-medium bg-primary text-white">
+                                1
+                            </button>
+                            <button class="px-3 py-1 border border-gray-300 rounded text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                                2
+                            </button>
+                            <button class="px-3 py-1 border border-gray-300 rounded text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                                3
+                            </button>
+                            <button class="px-3 py-1 border border-gray-300 rounded text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                                Next
+                            </button>
+                        </nav>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Success Modal -->
+            <div id="success-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+                <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+                    <div class="flex flex-col items-center">
+                        <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                            <i class="fas fa-check text-green-600 text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2 text-center">Vote Submitted Successfully!</h3>
+                        <p class="text-gray-600 text-center mb-4">Thank you for participating in the Nkoranza SHTs elections.</p>
+                        <button onclick="document.getElementById('success-modal').classList.add('hidden'); showSection('home')" class="bg-primary hover:bg-primary-light text-white px-4 py-2 rounded transition w-full">
+                            Continue
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Modals -->
+            <!-- Add Election Modal -->
+            <div id="add-election-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+                <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold">Add New Election</h3>
+                        <button onclick="document.getElementById('add-election-modal').classList.add('hidden')" class="text-gray-400 hover:text-gray-500">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    
+                    <form class="space-y-4">
+                        <div>
+                            <label for="election-title" class="block text-sm font-medium text-gray-700 mb-1">Election Title</label>
+                            <input type="text" id="election-title" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="start-date" class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                                <input type="datetime-local" id="start-date" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+                            </div>
+                            <div>
+                                <label for="end-date" class="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                                <input type="datetime-local" id="end-date" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label for="election-description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                            <textarea id="election-description" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"></textarea>
+                        </div>
+                        
+                        <div class="flex justify-end space-x-3 pt-4">
+                            <button type="button" onclick="document.getElementById('add-election-modal').classList.add('hidden')" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                                Cancel
+                            </button>
+                            <button type="button" onclick="addNewElection()" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-light focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                                Save Election
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Add Candidate Modal -->
+            <div id="add-candidate-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+                <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold">Add New Candidate</h3>
+                        <button onclick="document.getElementById('add-candidate-modal').classList.add('hidden')" class="text-gray-400 hover:text-gray-500">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    
+                    <form class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="candidate-firstname" class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                                <input type="text" id="candidate-firstname" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+                            </div>
+                            <div>
+                                <label for="candidate-lastname" class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                                <input type="text" id="candidate-lastname" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label for="candidate-election" class="block text-sm font-medium text-gray-700 mb-1">Election</label>
+                            <select id="candidate-election" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+                                <option>Select Election</option>
+                                <option>SRC President 2024/2025</option>
+                                <option>Academic Committee 2024/2025</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="candidate-position" class="block text-sm font-medium text-gray-700 mb-1">Position</label>
+                            <input type="text" id="candidate-position" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+                        </div>
+                        
+                        <div>
+                            <label for="candidate-department" class="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                            <select id="candidate-department" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+                                <option>Select Department</option>
+                                <option>Computer Science</option>
+                                <option>Business Administration</option>
+                                <option>Electrical Engineering</option>
+                                <option>Mechanical Engineering</option>
+                                <option>Accounting</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="candidate-manifesto" class="block text-sm font-medium text-gray-700 mb-1">Manifesto (Optional)</label>
+                            <textarea id="candidate-manifesto" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"></textarea>
+                        </div>
+                        
+                        <div>
+                            <label for="candidate-photo" class="block text-sm font-medium text-gray-700 mb-1">Photo</label>
+                            <div class="mt-1 flex items-center">
+                                <span class="inline-block h-12 w-12 rounded-full overflow-hidden bg-gray-100">
+                                    <svg class="h-full w-full text-gray-300" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
+                                    </svg>
+                                </span>
+                                <button type="button" class="ml-5 bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                                    Upload
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-end space-x-3 pt-4">
+                            <button type="button" onclick="document.getElementById('add-candidate-modal').classList.add('hidden')" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                                Cancel
+                            </button>
+                            <button type="button" onclick="addNewCandidate()" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-light focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                                Save Candidate
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Add Voter Modal -->
+            <div id="add-voter-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+                <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold">Add New Voter</h3>
+                        <button onclick="document.getElementById('add-voter-modal').classList.add('hidden')" class="text-gray-400 hover:text-gray-500">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    
+                    <form class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="voter-id" class="block text-sm font-medium text-gray-700 mb-1">Student ID</label>
+                                <input type="text" id="voter-id" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+                            </div>
+                            <div>
+                                <label for="voter-password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                                <input type="password" id="voter-password" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="voter-firstname" class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                                <input type="text" id="voter-firstname" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+                            </div>
+                            <div>
+                                <label for="voter-lastname" class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                                <input type="text" id="voter-lastname" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="voter-department" class="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                                <select id="voter-department" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+                                    <option>Select Department</option>
+                                    <option>Computer Science</option>
+                                    <option>Business Administration</option>
+                                    <option>Electrical Engineering</option>
+                                    <option>Mechanical Engineering</option>
+                                    <option>Accounting</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="voter-level" class="block text-sm font-medium text-gray-700 mb-1">Level</label>
+                                <select id="voter-level" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+                                    <option>100</option>
+                                    <option>200</option>
+                                    <option>300</option>
+                                    <option>400</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label for="voter-email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                            <input type="email" id="voter-email" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+                        </div>
+                        
+                        <div class="flex justify-end space-x-3 pt-4">
+                            <button type="button" onclick="document.getElementById('add-voter-modal').classList.add('hidden')" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                                Cancel
+                            </button>
+                            <button type="button" onclick="addNewVoter()" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-light focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                                Save Voter
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Import Voters Modal -->
+            <div id="import-voters-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+                <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold">Import Voters</h3>
+                        <button onclick="document.getElementById('import-voters-modal').classList.add('hidden')" class="text-gray-400 hover:text-gray-500">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <p class="text-sm text-gray-500 mb-4">Upload a CSV file containing voter information. The file should include the following columns in order: Student ID, Password, First Name, Last Name, Department, Level, Email.</p>
+                            
+                            <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                                <div class="space-y-1 text-center">
+                                    <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                    <div class="flex text-sm text-gray-600">
+                                        <label for="voter-file" class="relative cursor-pointer bg-white rounded-md font-medium text-primary hover:text-primary-light focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary">
+                                            <span>Upload a file</span>
+                                            <input id="voter-file" type="file" class="sr-only">
+                                        </label>
+                                        <p class="pl-1">or drag and drop</p>
+                                    </div>
+                                    <p class="text-xs text-gray-500">
+                                        CSV file up to 10MB
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-end space-x-3 pt-4">
+                            <button type="button" onclick="document.getElementById('import-voters-modal').classList.add('hidden')" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                                Cancel
+                            </button>
+                            <button type="button" onclick="importVoters()" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-light focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                                Import Voters
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-dark text-white py-8">
+            <div class="container mx-auto px-4">
+                <div class="grid md:grid-cols-3 gap-8">
+                    <div>
+                        <h3 class="text-xl font-bold mb-4">Nkoranza SHTs</h3>
+                        <p class="text-gray-300">Empowering students through democratic processes and transparent elections.</p>
+                    </div>
+                    <div>
+                        <h4 class="text-lg font-semibold mb-4">Quick Links</h4>
+                        <ul class="space-y-2">
+                            <li><a href="#" class="text-gray-300 hover:text-white transition">Home</a></li>
+                            <li><a href="#" class="text-gray-300 hover:text-white transition">Vote</a></li>
+                            <li><a href="#" class="text-gray-300 hover:text-white transition">Results</a></li>
+                            <li><a href="#" class="text-gray-300 hover:text-white transition">Contact</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="text-lg font-semibold mb-4">Contact Us</h4>
+                        <address class="text-gray-300 not-italic">
+                            <p><i class="fas fa-map-marker-alt mr-2"></i> Nkoranza Technical Institute, Ghana</p>
+                            <p><i class="fas fa-phone-alt mr-2"></i> +233 24 123 4567</p>
+                            <p><i class="fas fa-envelope mr-2"></i> election@nkoranzashts.edu.gh</p>
+                        </address>
+                    </div>
+                </div>
+                <div class="border-t border-gray-700 mt-8 pt-6 text-center text-gray-400">
+                    <p>&copy; 2025 Nkoranza Senior High Technical School. All rights reserved.</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Simulated database for demo purposes
+        const users = [
+            { id: 'NKSHT2025001', password: 'password123', name: 'John Mensah', isAdmin: false, hasVoted: false },
+            { id: 'NKSHT2025002', password: 'password123', name: 'Ama Asante', isAdmin: false, hasVoted: false },
+            { id: 'NKSHT2025003', password: 'kwaboat123',  name: 'Kwaku Boateng', isAdmin: false, hasVoted: false},   
+            { id: 'admin', password: 'admin123', name: 'Admin User', isAdmin: true, hasVoted: false }
+        ];
+        
+        let currentUser = null;
+        let selectedCandidates = {
+            president: null,
+            secretary: null
+        };
+
+        // Initialize app on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            showSection('home');
+        });
+
+        // Section navigation
+        function showSection(sectionId) {
+            // Hide all sections
+            document.getElementById('home-section').classList.add('hidden');
+            document.getElementById('login-section').classList.add('hidden');
+            document.getElementById('vote-section').classList.add('hidden');
+            document.getElementById('results-section').classList.add('hidden');
+            document.getElementById('admin-section').classList.add('hidden');
+            
+            // Show selected section
+            document.getElementById(`${sectionId}-section`).classList.remove('hidden');
+            
+            // Check authentication for protected sections
+            if ((sectionId === 'vote' || sectionId === 'admin') && !currentUser) {
+                showSection('login');
+            }
+            
+            // Check if admin and show admin nav if true
+            updateNavForAdmin();
+        }
+
+        // Admin management sections
+        function showAdminSection(section) {
+            // Hide all admin subsections
+            document.getElementById('admin-elections').classList.add('hidden');
+            document.getElementById('admin-candidates').classList.add('hidden');
+            document.getElementById('admin-voters').classList.add('hidden');
+            
+            // Show selected subsection
+            document.getElementById(`admin-${section}`).classList.remove('hidden');
+        }
+
+        // Update navigation based on user role
+        function updateNavForAdmin() {
+            const adminNav = document.getElementById('admin-nav');
+            const loginNav = document.getElementById('login-nav');
+            const logoutNav = document.getElementById('logout-nav');
+            
+            if (currentUser && currentUser.isAdmin) {
+                adminNav.classList.remove('hidden');
+                loginNav.classList.add('hidden');
+                logoutNav.classList.remove('hidden');
+            } else if (currentUser) {
+                adminNav.classList.add('hidden');
+                loginNav.classList.add('hidden');
+                logoutNav.classList.remove('hidden');
+            } else {
+                adminNav.classList.add('hidden');
+                loginNav.classList.remove('hidden');
+                logoutNav.classList.add('hidden');
+            }
+        }
+
+        // User authentication
+        function authenticateUser() {
+            const studentId = document.getElementById('studentId').value;
+            const password = document.getElementById('password').value;
+            
+            showLoader();
+            
+            // Simulate API call with timeout
+            setTimeout(() => {
+                const user = users.find(u => u.id === studentId && u.password === password);
+                
+                if (user) {
+                    currentUser = user;
+                    hideLoader();
+                    updateNavForAdmin();
+                    
+                    if (user.isAdmin) {
+                        showSection('admin');
+                    } else {
+                        showSection('home');
+                    }
+                    
+                    // Reset login form
+                    document.getElementById('studentId').value = '';
+                    document.getElementById('password').value = '';
+                    document.getElementById('login-error').classList.add('hidden');
+                } else {
+                    hideLoader();
+                    document.getElementById('login-error').classList.remove('hidden');
+                }
+            }, 1000);
+        }
+
+        // Logout functionality
+        function logout() {
+            currentUser = null;
+            updateNavForAdmin();
+            showSection('home');
+        }
+
+        // Voting functionality
+        function selectCandidate(position, candidateId) {
+            // Reset all selections for this position
+            const allChecks = document.querySelectorAll(`[id^="${position}-"]`);
+            allChecks.forEach(check => {
+                if (check.id.endsWith('-check')) {
+                    check.classList.add('hidden');
+                }
+            });
+            
+            // Select the chosen candidate
+            document.getElementById(`${position}-${candidateId}`).checked = true;
+            document.getElementById(`${position}-${candidateId}-check`).classList.remove('hidden');
+            
+            // Update our selected candidates object
+            const candidateName = document.getElementById(`${position}-${candidateId}`).value;
+            selectedCandidates[position] = candidateName;
+            
+            // Enable submit button if all positions have a selection
+            const submitBtn = document.getElementById('submit-votes-btn');
+            const allPositionsFilled = Object.values(selectedCandidates).every(candidate => candidate !== null);
+            submitBtn.disabled = !allPositionsFilled;
+        }
+
+        // Confirm votes before submission
+        function confirmVotes() {
+            document.getElementById('confirm-president').textContent = selectedCandidates.president || 'Not selected';
+            document.getElementById('confirm-secretary').textContent = selectedCandidates.secretary || 'Not selected';
+            document.getElementById('confirmation-modal').classList.remove('hidden');
+        }
+
+        // Submit votes
+        function submitVotes() {
+            showLoader();
+            
+            // Simulate API call with timeout
+            setTimeout(() => {
+                // In a real app, we would send this data to the backend
+                console.log('Submitted votes:', selectedCandidates);
+                
+                // Mark user as voted
+                if (currentUser) {
+                    currentUser.hasVoted = true;
+                }
+                
+                hideLoader();
+                document.getElementById('confirmation-modal').classList.add('hidden');
+                document.getElementById('success-modal').classList.remove('hidden');
+                
+                // Reset selections for demo purposes
+                resetVoteSelections();
+            }, 2000);
+        }
+
+        // Reset vote selections
+        function resetVoteSelections() {
+            selectedCandidates = {
+                president: null,
+                secretary: null
+            };
+            
+            // Uncheck all radio buttons
+            document.querySelectorAll('input[type="radio"]').forEach(radio => {
+                radio.checked = false;
+            });
+            
+            // Hide all checkmarks
+            document.querySelectorAll('[id$="-check"]').forEach(check => {
+                check.classList.add('hidden');
+            });
+            
+            // Disable submit button
+            document.getElementById('submit-votes-btn').disabled = true;
+        }
+
+        // Admin modal functions
+        function showAddElectionModal() {
+            document.getElementById('add-election-modal').classList.remove('hidden');
+        }
+
+        function showAddCandidateModal() {
+            document.getElementById('add-candidate-modal').classList.remove('hidden');
+        }
+
+        function showAddVoterModal() {
+            document.getElementById('add-voter-modal').classList.remove('hidden');
+        }
+
+        function showImportVotersModal() {
+            document.getElementById('import-voters-modal').classList.remove('hidden');
+        }
+
+        // Admin CRUD functions (simulated)
+        function addNewElection() {
+            showLoader();
+            setTimeout(() => {
+                hideLoader();
+                document.getElementById('add-election-modal').classList.add('hidden');
+                alert('Election added successfully!');
+            }, 1000);
+        }
+
+        function addNewCandidate() {
+            showLoader();
+            setTimeout(() => {
+                hideLoader();
+                document.getElementById('add-candidate-modal').classList.add('hidden');
+                alert('Candidate added successfully!');
+            }, 1000);
+        }
+
+        function addNewVoter() {
+            showLoader();
+            setTimeout(() => {
+                hideLoader();
+                document.getElementById('add-voter-modal').classList.add('hidden');
+                alert('Voter added successfully!');
+            }, 1000);
+        }
+
+        function importVoters() {
+            showLoader();
+            setTimeout(() => {
+                hideLoader();
+                document.getElementById('import-voters-modal').classList.add('hidden');
+                alert('Voters imported successfully!');
+            }, 1000);
+        }
+
+        // Loader functions
+        function showLoader() {
+            document.getElementById('loader-section').classList.remove('hidden');
+        }
+
+        function hideLoader() {
+            document.getElementById('loader-section').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
